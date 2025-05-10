@@ -9,9 +9,9 @@ openai.api_key = "sk-proj-5eDNN4u1zTG-oVYxW2gdl8OicHH5oaX9f40mqvg3zpL1XGtNUw7Xjk
 
 # Token de Telegram
 TELEGRAM_TOKEN = "7837480577:AAH7sxIaCO6SnLjqL0LQ53H3ZAPe9KCBEoE"
-TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
+TELEGRAM_API_URL = f"https://api.telegram.org/bot7837480577:AAH7sxIaCO6SnLjqL0LQ53H3ZAPe9KCBEoE"
 
-@app.post(f"/{TELEGRAM_TOKEN}")
+@app.post(f"/7837480577:AAH7sxIaCO6SnLjqL0LQ53H3ZAPe9KCBEoE")
 async def webhook(request: Request):
     data = await request.json()
 
