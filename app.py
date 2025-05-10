@@ -1,52 +1,42 @@
-import os
+from fastapi import FastAPI, Request
 import openai
 import requests
-from flask import Flask, request
 
-# Configura tus claves
-TELEGRAM_TOKEN = "TU_TELEGRAM_BOT_TOKEN"
-OPENAI_KEY = "TU_OPENAI_API_KEY"
-openai.api_key = OPENAI_KEY
+app = FastAPI()
 
-app = Flask(__name__)
+# Tu API Key de OpenAI
+openai.api_key = "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"
 
-def get_chatgpt_prediction(user_query):
-    prompt = f"""Actúa como un experto en análisis deportivo.
-Responde con un pronóstico basado en estadísticas actuales, forma y tendencias.
+# Token de Telegram
+TELEGRAM_TOKEN = "7837480577:AAH7sxIaCO6SnLjqL0LQ53H3ZAPe9KCBEoE"
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
 
-Consulta: {user_query}
+@app.post(f"/{TELEGRAM_TOKEN}")
+async def webhook(request: Request):
+    data = await request.json()
 
-Pronóstico:"""
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "Eres un experto en predicción deportiva."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.7,
-        max_tokens=200
-    )
-    return response['choices'][0]['message']['content'].strip()
+    # Obtener mensaje y chat_id desde Telegram
+    message = data.get("message", {})
+    chat_id = message.get("chat", {}).get("id")
+    text = message.get("text", "")
 
-@app.route(f'/{TELEGRAM_TOKEN}', methods=['POST'])
-def telegram_webhook():
-    data = request.get_json()
-    chat_id = data['message']['chat']['id']
-    text = data['message'].get('text', '')
-
+    # Llamada a ChatGPT con el mensaje del usuario
     if text:
-        reply = get_chatgpt_prediction(text)
-        send_message(chat_id, reply)
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "Eres un experto en predicciones deportivas. Responde con claridad y precisión."},
+                {"role": "user", "content": text}
+            ]
+        )
+        reply = response["choices"][0]["message"]["content"]
+    else:
+        reply = "No entendí tu mensaje."
 
-    return {'ok': True}
+    # Responder al usuario en Telegram
+    requests.post(
+        f"{TELEGRAM_API_URL}/sendMessage",
+        json={"chat_id": chat_id, "text": reply}
+    )
 
-def send_message(chat_id, text):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": chat_id,
-        "text": text
-    }
-    requests.post(url, json=payload)
-
-if __name__ == '__main__':
-    app.run(port=5000)
+    return {"ok": True}
